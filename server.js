@@ -3,10 +3,8 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
 const session = require("express-session");
-const RedisStore = require("connect-redis").default;
-const redisClient = require("redis").createClient();
+const SQLiteStore = require("connect-sqlite3")(session);
 const sqlite3 = require("sqlite3").verbose();
-const helmet = require("helmet");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -44,11 +42,9 @@ const levels = {
   },
 };
 
-app.use(helmet());
-
 app.use(
   session({
-    store: new RedisStore({ client: redisClient }),
+    store: new SQLiteStore({ db: "sessions.db", table: "sessions" }),
     secret: "find_me_if_you_can",
     resave: false,
     saveUninitialized: false,
