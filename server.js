@@ -6,7 +6,6 @@ const session = require("express-session");
 const sqlite3 = require("sqlite3").verbose();
 
 const app = express();
-const router = express.Router();
 const PORT = process.env.PORT || 5000;
 
 const levels = {
@@ -42,7 +41,7 @@ const levels = {
   },
 };
 
-router.use(
+app.use(
   session({
     secret: "find_me_if_you_can",
     resave: false,
@@ -51,15 +50,15 @@ router.use(
   })
 );
 
-router.use(bodyParser.json());
-router.use(
+app.use(bodyParser.json());
+app.use(
   cors({
     origin: true,
     credentials: true,
   })
 );
 
-router.use((req, res, next) => {
+app.use((req, res, next) => {
   console.log("Session ID:", req.sessionID);
   console.log("Session Data:", req.session);
   next();
@@ -119,7 +118,7 @@ async function rules() {
   5. The event ends on 2024-08-02 at 12:00 PM.`;
 }
 
-router.post("/register", (req, res) => {
+app.post("/api/register", (req, res) => {
   const {
     teamName,
     memberName1,
@@ -147,7 +146,7 @@ router.post("/register", (req, res) => {
   );
 });
 
-router.post("/login", (req, res) => {
+app.post("/api/login", (req, res) => {
   const { email, password } = req.body;
   console.log("Login request received:", req.body);
 
@@ -174,7 +173,7 @@ router.post("/login", (req, res) => {
   );
 });
 
-router.get("/session", (req, res) => {
+app.get("/api/session", (req, res) => {
   console.log("Session check request received");
   if (req.session.user) {
     console.log("Session exists, user:", req.session.user);
@@ -185,7 +184,7 @@ router.get("/session", (req, res) => {
   }
 });
 
-router.post("/logout", (req, res) => {
+app.post("/api/logout", (req, res) => {
   console.log("Logout request received");
   req.session.destroy((err) => {
     if (err) {
@@ -198,7 +197,7 @@ router.post("/logout", (req, res) => {
   });
 });
 
-router.get("/levels", (req, res) => {
+app.get("/api/levels", (req, res) => {
   if (req.session.user) {
     const userId = req.session.user.id;
 
@@ -225,7 +224,7 @@ router.get("/levels", (req, res) => {
   }
 });
 
-router.get("/levels/:level", (req, res) => {
+app.get("/api/levels/:level", (req, res) => {
   const level = parseInt(req.params.level, 10);
   if (levels[level]) {
     res.json(levels[level]);
@@ -234,7 +233,7 @@ router.get("/levels/:level", (req, res) => {
   }
 });
 
-router.post("/levels/:level/submit", (req, res) => {
+app.post("/api/levels/:level/submit", (req, res) => {
   const level = parseInt(req.params.level, 10);
   const { flag } = req.body;
 
@@ -267,7 +266,7 @@ router.post("/levels/:level/submit", (req, res) => {
   }
 });
 
-router.get("/profile", (req, res) => {
+app.get("/api/profile", (req, res) => {
   if (req.session.user) {
     const userId = req.session.user.id;
 
@@ -290,7 +289,7 @@ router.get("/profile", (req, res) => {
   }
 });
 
-router.get("/stats", (req, res) => {
+app.get("/api/stats", (req, res) => {
   if (req.session.user) {
     const userId = req.session.user.id;
 
@@ -326,6 +325,6 @@ router.get("/stats", (req, res) => {
   }
 });
 
-api.use("/api/", router);
-
-export const handler = serverless(api);
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
