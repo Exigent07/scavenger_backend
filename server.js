@@ -3,7 +3,6 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
 const session = require("express-session");
-const SQLiteStore = require("connect-sqlite3")(session);
 const sqlite3 = require("sqlite3").verbose();
 
 const app = express();
@@ -44,15 +43,10 @@ const levels = {
 
 app.use(
   session({
-    store: new SQLiteStore({ db: "sessions.db", table: "sessions" }),
     secret: "find_me_if_you_can",
     resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24,
-    },
+    saveUninitialized: true,
+    cookie: { secure: false, httpOnly: false, maxAge: 1000 * 60 * 60 * 24 },
   })
 );
 
@@ -295,21 +289,42 @@ app.get("/api/profile", (req, res) => {
   }
 });
 
-app.get("/api/rules", async (req, res) => {
-  try {
-    const rulesText = await rules();
-    res.json({ rules: rulesText });
-  } catch (error) {
-    console.error("Error retrieving rules", error);
-    res.status(500).json({ message: "Error retrieving rules" });
+app.get("/api/stats", (req, res) => {
+  if (req.session.user) {
+    const userId = req.session.user.id;
+
+    db.all(
+      `SELECT level, progress FROM Progress WHERE userId = ?`,
+      [userId],
+      (err, rows) => {
+        if (err) {
+          console.error("Error retrieving progress data", err);
+          res.status(500).json({ message: "Error retrieving progress data" });
+        } else {
+          const solvedLevels = rows
+            .filter((row) => row.progress === 1)
+            .map((row) => row.level);
+          const levelsData = Object.keys(levels).map((level) => ({
+            level: parseInt(level, 10),
+            ...levels[level],
+            solved: solvedLevels.includes(parseInt(level, 10)),
+          }));
+
+          rules()
+            .then((rules) => {
+              res.json({ solvedLevels, rules });
+            })
+            .catch((err) => {
+              res.status(500).json({ message: "Error retrieving rules" });
+            });
+        }
+      }
+    );
+  } else {
+    res.status(401).json({ message: "Not logged in" });
   }
 });
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-});
-
-app.use((err, req, res, next) => {
-  console.error("Server error:", err.stack);
-  res.status(500).json({ message: "Something went wrong!" });
 });
