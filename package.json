@@ -1,11 +1,10 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "./node_modules/.bin/netlify-lambda serve src",
-    "build": "./node_modules/.bin/netlify-lambda build src"
+    "build": "netlify deploy --prod"
   },
   "author": "",
   "license": "ISC",
@@ -18,6 +17,7 @@
     "express": "^4.19.2",
     "express-session": "^1.18.0",
     "netlify-lambda": "^2.0.16",
+    "serverless-http": "^3.2.0",
     "sqlite3": "^5.1.7"
   }
 }
