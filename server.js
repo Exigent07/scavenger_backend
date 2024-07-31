@@ -46,7 +46,7 @@ app.use(
     secret: "find_me_if_you_can",
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false, httpOnly: true, maxAge: 1000 * 60 * 60 * 24 },
+    cookie: { secure: true, httpOnly: true, maxAge: 1000 * 60 * 60 * 24 },
   })
 );
 
